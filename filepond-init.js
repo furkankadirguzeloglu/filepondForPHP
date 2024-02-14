@@ -13,16 +13,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }).then(response => {
                         return response.text();
                     }).then(response => {
-                        if (response.status === "error") {
+                        var responseJSON = JSON.parse(response);
+                        if (responseJSON.status === "error") {
                             alert(response.message);
                             error(response.message);
                         } else {
                             load(response);
-                            console.log(response);
                         }
                     }).catch(error => {
                         console.error('Error:', error);
-                        alert('An error occurred during file upload.');
                     });
                 },
             },
@@ -44,15 +43,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     }).then(response => {
                         return response.text();
                     }).then(response => {
-                        if (response.status === "error") {
+                        var responseJSON = JSON.parse(response);
+                        if (responseJSON.status === "error") {
                             alert(response.message);
                             error(response.message);
-                        } else {
-                            console.log(response);
                         }
                     }).catch(error => {
                         console.error('Error:', error);
-                        alert('An error occurred during file delete.');
                     });
                 }
             }

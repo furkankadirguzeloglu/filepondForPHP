@@ -1,37 +1,25 @@
 <?php
   if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["upload"])) {
-    if(!isset($_POST["images"]) || empty($_POST["images"])){
-      echo "No image selected";
-      exit;
+    if(empty($_POST["images"]) || (is_array($_POST["images"]) && empty($_POST["images"][0]))){
+        echo "No image selected";
+        exit;
     }
   
-    if(!isset($_POST["file"]) || empty($_POST["file"])){
-      echo "No file selected";
-      exit;
+    if(empty($_POST["file"]) || (is_array($_POST["file"]) && empty($_POST["file"][0]))){
+        echo "No file selected";
+        exit;
     }
-  
+      
     $images = is_array($_POST["images"]) ? array_map(function($item){ return json_decode($item, true); }, $_POST["images"]) : json_decode($_POST["images"], true);
     $file = is_array($_POST["file"]) ? array_map(function($item){ return json_decode($item, true); }, $_POST["file"]) : json_decode($_POST["file"], true);
-  
-    if(isset($images[0]) && array_reduce($images, function($carry, $item){ return $carry && $item["status"] == "successful"; }, true) === false){
-      echo "Error: " . $images[0]["message"];
-      exit;
-    }
-  
-    if(isset($file[0]) && array_reduce($file, function($carry, $item){ return $carry && $item["status"] == "successful"; }, true) === false){
-      echo "Error: " . $file[0]["message"];
-      exit;
-    }
   
     $imagePaths = array_map(function($item) {
       return $item["data"];
     }, $images);
   
     $filePath = $file["data"];
-  
-    print_r($imagePaths);
-    print_r($filePath);
-    exit;
+    echo '<pre>Images: ' . print_r($imagePaths, true) . "<br>File: " . print_r($filePath, true) . "</pre>";
+    exit;    
   }
 ?>
 <!DOCTYPE html>
@@ -80,7 +68,7 @@
       </div>
       <div class="form-group">
         <label for="file">File:</label>
-        <input type="file" class="filepond" name="file">
+        <input type="file" class="filepond" name="file" data-max-file-size="1000MB">
       </div>
       <div class="form-group">
         <input type="submit" name="upload" value="Upload">

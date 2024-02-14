@@ -13,6 +13,7 @@ $allowedExtensions = array(
     "application/zip" => "zip",
     "application/x-rar-compressed" => "rar",
     "application/x-msdownload" => "exe",
+	"application/x-dosexec" => "exe",
     "application/octet-stream" => "bin or dll",
 );
 
@@ -56,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         finfo_close($finfo);
 
         if (!array_key_exists($fileMimeType, $allowedExtensions)) {
-            error("You cannot upload this file extension", 403);
+            error("You cannot upload this file extension ($fileMimeType)", 403);
         }
         
         $fileExtension = $allowedExtensions[$fileMimeType];
@@ -103,11 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     foreach ($files as $file) {
                         if ($file == '.' || $file == '..') continue;
                         $fileNames[] = array(base64_decode(pathinfo($file, PATHINFO_FILENAME)), $file);
-                    }
-                    
-                    if (empty($fileNames)) {
-                        error("The file to be deleted was not found", 404);
-                    }
+                    }             
     
                     $file = null;
                     for($i = 0; $i < count((array)$fileNames); $i++){
@@ -117,34 +114,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
     
-                    if ($file === null) {
-                        error("The file to be deleted was not found", 404);
-                    }
-    
                     $filePath = $uploadFolder . "/" . $file;
                     if(file_exists($filePath)){
-                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                        $fileMimeType = finfo_file($finfo, $filePath);
-                        finfo_close($finfo);
-    
-                        if($fileMimeType == $fileData["fileType"]){
-                            chmod($uploadFolder . "/" . $file, 0777);
-                            if (unlink($uploadFolder . "/" . $file)) {
-                                successful("File deleted", null, 200);
-                            } else {
-                                error("Failed to delete the file", 500);
-                            }
-                        } else {
-                            error("File type mismatch", 400);
+                        chmod($uploadFolder . "/" . $file, 0777);
+                        if (unlink($uploadFolder . "/" . $file)) {
+                            successful("File deleted", null, 200);
                         }
-                    } else {
-                        error("File not found", 404);
                     }
-                } else {
-                    error("Failed to get the file list", 500);
                 }
-            } else {
-                error("Invalid request method or upload directory not found", 400);
             }
         }
     }

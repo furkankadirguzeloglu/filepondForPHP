@@ -1,10 +1,8 @@
-var files = [];
-let folderID = [...Array(30)].map(() => Math.floor(Math.random() * 10)).join('');
 document.addEventListener('DOMContentLoaded', function() {
     const inputElements = document.querySelectorAll('input[type="file"].filepond');
     inputElements.forEach(function(inputElement) {
         FilePond.registerPlugin(FilePondPluginImagePreview, FilePondPluginImageExifOrientation, FilePondPluginFileValidateSize, FilePondPluginFileValidateType);
-        FilePond.create(inputElement, {
+        const pond = FilePond.create(inputElement, {
             server: {
                 process: (fieldName, file, metadata, load, error, progress, abort, transfer, options) => {
                     const formData = new FormData();
@@ -12,69 +10,50 @@ document.addEventListener('DOMContentLoaded', function() {
                     fetch('filepond.php', {
                         method: 'POST',
                         body: formData
-                    }).then(response => response.text()).then(response => {
-                        load(response);
-                    })
-                }
-            },
-            onprocessfile: (error, file) => {
-                if (!error) {
-                    const fieldName = inputElement.getAttribute('name');
-                    const fileData = {
-                        method: "add",
-                        folderID: folderID,
-                        fileId: file.id,
-                        fileName: file.filename,
-                        fileExtension: file.fileExtension,
-                        fileSize: file.fileSize,
-                        fileType: file.fileType,
-                        fileHex: file.serverId
-                    };
-                    const fileJson = JSON.stringify(fileData);
-                    fetch('filepond.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: fileJson
-                        })
-                        .then(response => response.text())
-                        .then(data => {
-                            if (data == "true") {
-                                files.push({
-                                    folderID: folderID,
-                                    fileId: file.id,
-                                    fileName: file.filename,
-                                    fileExtension: file.fileExtension,
-                                    fileSize: file.fileSize,
-                                    fileType: file.fileType,
-                                    fieldName: fieldName
-                                });
-                            }
-                        })
-                }
+                    }).then(response => {
+                        return response.text();
+                    }).then(response => {
+                        if (response.status === "error") {
+                            alert(response.message);
+                            error(response.message);
+                        } else {
+                            load(response);
+                            console.log(response);
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred during file upload.');
+                    });
+                },
             },
             onremovefile: (error, file) => {
                 if (!error) {
                     const fileData = {
                         method: "delete",
-                        folderID: folderID,
-                        fileId: file.id,
                         fileName: file.filename,
-                        fileExtension: file.fileExtension,
                         fileSize: file.fileSize,
-                        fileType: file.fileType,
-                        fileHex: file.serverId
+                        fileType: file.fileType
                     };
                     const fileJson = JSON.stringify(fileData);
                     fetch('filepond.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: fileJson
-                        })
-                        .then(response => response.text())
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: fileJson
+                    }).then(response => {
+                        return response.text();
+                    }).then(response => {
+                        if (response.status === "error") {
+                            alert(response.message);
+                            error(response.message);
+                        } else {
+                            console.log(response);
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred during file delete.');
+                    });
                 }
             }
         });

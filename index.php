@@ -1,36 +1,38 @@
 <?php
-  require_once("filepond.php");
-  $maxUploadSize = getSize(ini_get('upload_max_filesize'));
-  $maxPostSize = getSize(ini_get('post_max_size'));
-  
   if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["upload"])) {
-    if(!isset($_POST["filepond"])) {
-      echo "Error: No data found!";
+    if(!isset($_POST["images"]) || empty($_POST["images"])){
+      echo "No image selected";
       exit;
     }
   
-    $filepondData = json_decode($_POST["filepond"]);
-    if(!isset($filepondData) || empty($filepondData) || is_null($filepondData) || !is_array($filepondData)){
-      echo "Error: File not uploaded";
+    if(!isset($_POST["file"]) || empty($_POST["file"])){
+      echo "No file selected";
       exit;
     }
   
-    foreach ($filepondData as $file) {
-      echo "File Name: " . $file->fileName . "<br>";
-      echo "File Size: " . $file->fileSize . "<br>";
-      echo "File Type: " . $file->fileType . "<br>";
-      echo "File Extension: " . $file->fileExtension . "<br>";
-      echo "File Id: " . $file->fileId . "<br>";
-      echo "Folder Id: " . $file->folderID . "<br>";
-      echo "Field Name: " . $file->fieldName . "<br>";
-      echo "File Path: " . getFilePath($file) . "<br>";
-      //echo "File Hex: " . getFileHex($file) . "<br>";
-      echo "<hr>";
-      //deleteAllFiles($file);
-      //deleteFile($file);
+    $images = is_array($_POST["images"]) ? array_map(function($item){ return json_decode($item, true); }, $_POST["images"]) : json_decode($_POST["images"], true);
+    $file = is_array($_POST["file"]) ? array_map(function($item){ return json_decode($item, true); }, $_POST["file"]) : json_decode($_POST["file"], true);
+  
+    if(isset($images[0]) && array_reduce($images, function($carry, $item){ return $carry && $item["status"] == "successful"; }, true) === false){
+      echo "Error: " . $images[0]["message"];
+      exit;
     }
+  
+    if(isset($file[0]) && array_reduce($file, function($carry, $item){ return $carry && $item["status"] == "successful"; }, true) === false){
+      echo "Error: " . $file[0]["message"];
+      exit;
+    }
+  
+    $imagePaths = array_map(function($item) {
+      return $item["data"];
+    }, $images);
+  
+    $filePath = $file["data"];
+  
+    print_r($imagePaths);
+    print_r($filePath);
     exit;
-  } 
+  }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,19 +42,13 @@
     <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css" rel="stylesheet">
     <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
     <style>
-      .form{
+      .form {
         margin-top: 50px;
       }
 
       .form-group {
         width: 70%;
         margin: auto;
-      }
-
-      .info{
-        margin: auto;
-        text-align: center;
-        font-size: 25px;
       }
 
       label {
@@ -78,11 +74,9 @@
   </head>
   <body>
     <form id="myform" method="post" class="form">
-    <label class="info">PHP Max Upload Size: <?php echo $maxUploadSize?></label>
-    <label class="info">PHP Max Post Size: <?php echo $maxPostSize?></label>
       <div class="form-group">
         <label for="images">Images:</label>
-        <input type="file" class="filepond" name="images" data-max-file-size="10MB" accept="image/png, image/jpeg" multiple>
+        <input type="file" class="filepond" name="images[]" data-max-file-size="10MB" accept="image/jpeg, image/png, image/gif, image/bmp, image/webp, image/tiff, image/svg+xml, image/x-icon" multiple>
       </div>
       <div class="form-group">
         <label for="file">File:</label>
@@ -92,20 +86,6 @@
         <input type="submit" name="upload" value="Upload">
       </div>
     </form>
-    <script>
-      var formId = "myform";
-      document.addEventListener('DOMContentLoaded', function() {
-          document.getElementById(formId).addEventListener('submit', function(event) {
-              const newInput = Object.assign(document.createElement("input"), {
-                  name: "filepond",
-                  type: "text",
-                  value: JSON.stringify(files)
-              });
-              newInput.style.display = "none";
-              document.getElementById(formId).appendChild(newInput);
-          });
-      });
-    </script>
     <script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
     <script src='https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.min.js'></script>
     <script src='https://unpkg.com/filepond-plugin-image-exif-orientation/dist/filepond-plugin-image-exif-orientation.min.js'></script>
